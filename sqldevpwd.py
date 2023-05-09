@@ -6,7 +6,7 @@ import base64
 import hashlib
 from Cryptodome.Cipher import AES
 
-VERSION="1.0"
+VERSION="1.1"
 
 def decryptpwd(encryptedpwd, decryptionkey):
     b64pwd = base64.b64decode(encryptedpwd)
@@ -27,10 +27,12 @@ def decryptpwd(encryptedpwd, decryptionkey):
 def main():
     parser = argparse.ArgumentParser(description='Prints to stdout decrypted passwords for connections in a SQL Developer 19.2+ export file in json format')
     parser.add_argument('--version', action='version', version='%(prog)s ' + VERSION)
+    parser.add_argument('--headers', action='store_true',
+                help="show headers at first line of output")
     parser.add_argument("-k", dest="decryptkey", required=True,
-                  help="key to decrypt passwords, usually the export file encryption key or value of 'db.system.id' attribute in 'product-preferences.xml' file")
+                help="key to decrypt passwords, usually the export file encryption key or value of 'db.system.id' attribute in 'product-preferences.xml' file")
     parser.add_argument("jsonfile", 
-                  help="reads FILE.json and decrypt all connection passwords in it", metavar="FILE.json")
+                help="reads FILE.json and decrypt all connection passwords in it", metavar="FILE.json")
     
   
     args=parser.parse_args()
@@ -45,7 +47,11 @@ def main():
             datos=json.load(sdevconn)
         except json.decoder.JSONDecodeError:
             raise SystemExit ("problems reading json file")
-
+        
+    if args.headers:
+        print ('ConnName'.ljust(50)," ",'password'.ljust(30))
+        print ('-'*50," ",'-'*30)
+        
     for c in datos['connections']:
         print (c['info']['ConnName'].ljust(50)," ",decryptpwd(c['info']['password'], args.decryptkey).ljust(30))                      
 
