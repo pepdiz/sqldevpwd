@@ -1,7 +1,7 @@
 # sqldevpwd
 Tool to decrypt sql developer connection passwords in a exported json file.
 
-Giving a connecions json file and a decryption key it will show in stdout decrypted passwords for all connections in the file.
+Giving a connections json file and a decryption key it will show in stdout decrypted passwords for all connections in the file.
 
 ## requirements
 This program reads a json file with connections defined in Sql Developer. You can export connections as json file directly from Sql Developer or copy the file in file system, in windows it is located at c:\Users\\\<user>\AppData\Roaming\Sql Developer\Systemx.y.z.v.w\o.jdeveloper.db.connection\  where x.y.z.w.o is version number.
