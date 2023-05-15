@@ -29,6 +29,8 @@ def main():
     parser.add_argument('--version', action='version', version='%(prog)s ' + VERSION)
     parser.add_argument('--headers', action='store_true',
                 help="show headers at first line of output")
+    parser.add_argument('-d', '--delim', default=' ',
+                help="column separator, just one character")    
     parser.add_argument("-k", dest="decryptkey", required=True,
                 help="key to decrypt passwords, usually the export file encryption key or value of 'db.system.id' attribute in 'product-preferences.xml' file")
     parser.add_argument("jsonfile", 
@@ -53,7 +55,7 @@ def main():
         print ('-'*50," ",'-'*30)
         
     for c in datos['connections']:
-        print (c['info']['ConnName'].ljust(50)," ",decryptpwd(c['info']['password'], args.decryptkey).ljust(30))                      
+        print (c['info']['ConnName'].ljust(50),args.delim.ljust(1),decryptpwd(c['info']['password'], args.decryptkey).ljust(30))                      
 
 
 if __name__ == "__main__" :
