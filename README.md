@@ -11,6 +11,7 @@ Tests are done with a json file exported with Sql Developer vesion 22.2.1 but it
 Of course, you need python installed and also the required packages:
 * json
 * os
+* re
 * argparse
 * base64
 * hashlib
