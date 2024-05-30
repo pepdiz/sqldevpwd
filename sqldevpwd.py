@@ -1,12 +1,27 @@
 #!/usr/bin/env python3
 import json
 import os
+import re
 import argparse
 import base64
 import hashlib
 from Cryptodome.Cipher import AES
 
-VERSION="1.1"
+VERSION="1.2"
+
+def con_name(c):
+    try:
+        n = c['info']['ConnName']
+    except:
+        n = c['name']
+    return n
+
+def con_pwd(c):
+    try:
+        p = c['info']['password']
+    except:
+        p = ''
+    return p
 
 def decryptpwd(encryptedpwd, decryptionkey):
     b64pwd = base64.b64decode(encryptedpwd)
@@ -31,6 +46,8 @@ def main():
                 help="show headers at first line of output")
     parser.add_argument('-d', '--delim', default=' ',
                 help="column separator, just one character")    
+    parser.add_argument("-f", dest='filter', required=False,
+                help="Filter to apply with format key=value where key should be 'name' or 'user' and value a regexp")
     parser.add_argument("-k", dest="decryptkey", required=True,
                 help="key to decrypt passwords, usually the export file encryption key or value of 'db.system.id' attribute in 'product-preferences.xml' file")
     parser.add_argument("jsonfile", 
@@ -49,13 +66,20 @@ def main():
             datos=json.load(sdevconn)
         except json.decoder.JSONDecodeError:
             raise SystemExit ("problems reading json file")
-        
+
     if args.headers:
-        print ('ConnName'.ljust(50)," ",'password'.ljust(30))
-        print ('-'*50," ",'-'*30)
+        print ('Name'.ljust(50)," ",'User'.ljust(30)," ",'Password'.ljust(30))
+        print ('-'*50," ",'-'*30," ",'-'*30)
         
-    for c in datos['connections']:
-        print (c['info']['ConnName'].ljust(50),args.delim.ljust(1),decryptpwd(c['info']['password'], args.decryptkey).ljust(30))                      
+    con = [ { 'name': x['name'], 'user': x['info']['user'], 'pwd': decryptpwd(con_pwd(x), args.decryptkey)} for x in datos['connections']]
+ 
+    if args.filter:
+        fk,fv = args.filter.split('=')
+        fr = re.compile(fv)
+        con = [ x for x in con if fr.match(x[fk])]
+    
+    for c in con:
+        print (c['name'].ljust(50),args.delim.ljust(1),c['user'].ljust(30),args.delim.ljust(1),c['pwd'].ljust(30))                      
 
 
 if __name__ == "__main__" :
