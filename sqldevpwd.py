@@ -9,13 +9,6 @@ from Cryptodome.Cipher import AES
 
 VERSION="1.2"
 
-def con_name(c):
-    try:
-        n = c['info']['ConnName']
-    except:
-        n = c['name']
-    return n
-
 def con_pwd(c):
     try:
         p = c['info']['password']
