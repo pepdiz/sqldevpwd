@@ -7,7 +7,7 @@ import base64
 import hashlib
 from Cryptodome.Cipher import AES
 
-VERSION="1.2"
+VERSION="1.3"
 
 def con_pwd(c):
     try:
@@ -33,21 +33,34 @@ def decryptpwd(encryptedpwd, decryptionkey):
 
 
 def main():
+    max_size_to_show_dots=30
+    default_cols_width='50,30,30'
+    
     parser = argparse.ArgumentParser(description='Prints to stdout decrypted passwords for connections in a SQL Developer 19.2+ export file in json format')
     parser.add_argument('--version', action='version', version='%(prog)s ' + VERSION)
     parser.add_argument('--headers', action='store_true',
-                help="show headers at first line of output")
+                help="show headers at first lines of output")
+    parser.add_argument('--csv', action='store_true',
+                help="generate a csv file rather than a table file, ignoring -s and header rule")
     parser.add_argument('-d', '--delim', default=' ',
-                help="column separator, just one character")    
+                help="column separator, just one character")
+    parser.add_argument('-s', '--size', default=default_cols_width,
+                help="a comma separated list of three numbers defining column size of each colum, if only one number given applies to all three columns")        
     parser.add_argument("-f", dest='filter', required=False,
                 help="Filter to apply with format key=value where key should be 'name' or 'user' and value a regexp")
     parser.add_argument("-k", dest="decryptkey", required=True,
                 help="key to decrypt passwords, usually the export file encryption key or value of 'db.system.id' attribute in 'product-preferences.xml' file")
     parser.add_argument("jsonfile", 
-                help="reads FILE.json and decrypt all connection passwords in it", metavar="FILE.json")
-    
+                help="reads FILE.json and decrypt all connection passwords in it", metavar="FILE.json") 
   
     args=parser.parse_args()
+
+    csize=(args.size if ',' in args.size else ','.join([args.size,args.size,args.size])).split(',')
+    csize=default_cols_width.split(',') if len(csize) != 3 else csize
+    try:
+        cols_width=[ int(c) for c in csize]
+    except:
+        cols_width=[ int(c) for c in default_cols_width.split(',')]
     
     try:
         fic=os.path.realpath(args.jsonfile, strict=True)
@@ -61,8 +74,11 @@ def main():
             raise SystemExit ("problems reading json file")
 
     if args.headers:
-        print ('Name'.ljust(50)," ",'User'.ljust(30)," ",'Password'.ljust(30))
-        print ('-'*50," ",'-'*30," ",'-'*30)
+        if args.csv:
+            print (args.delim.join(['Name','User','Password']))
+        else:
+            print(args.delim.join([ a.ljust(b) for a,b in zip(['Name','User','Password'],cols_width)]))
+            print(args.delim.join([ '-'*n for n in cols_width]))
         
     con = [ { 'name': x['name'], 'user': x['info']['user'], 'pwd': decryptpwd(con_pwd(x), args.decryptkey)} for x in datos['connections']]
  
@@ -72,7 +88,7 @@ def main():
         con = [ x for x in con if fr.match(x[fk])]
     
     for c in con:
-        print (c['name'].ljust(50),args.delim.ljust(1),c['user'].ljust(30),args.delim.ljust(1),c['pwd'].ljust(30))                      
+        print(args.delim.join([ a if args.csv else (t if len(t:=a.ljust(b)) == b else (t[:(b-3)]+'...') if b>max_size_to_show_dots else t[:b] )for a,b in zip(c.values(),cols_width)]))
 
 
 if __name__ == "__main__" :
